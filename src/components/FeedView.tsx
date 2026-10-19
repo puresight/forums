@@ -11,11 +11,13 @@ const SORTS: Array<{ id: TopicSort; label: string }> = [
 
 export default function FeedView({
   onSelectTopic,
+  initialCategoryId,
 }: {
   onSelectTopic: (topicId: string) => void;
+  initialCategoryId?: string;
 }) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(
-    undefined
+    initialCategoryId
   );
   const [sortBy, setSortBy] = useState<TopicSort>('latest');
 

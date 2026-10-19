@@ -7,6 +7,8 @@ import FeedView from './components/FeedView';
 import ThreadView, { type ReplyTarget } from './components/ThreadView';
 import ComposerModal, { type ComposerMode } from './components/ComposerModal';
 import OutboxView from './components/OutboxView';
+import CategoriesView from './components/CategoriesView';
+import ProfileView from './components/ProfileView';
 
 const TABS = [
   { id: 'feed', label: 'Feed', icon: MessageSquare },
@@ -94,6 +96,10 @@ export default function App() {
   const pendingCount = useLiveQuery(() => db.outbox.count(), [], 0);
   const activeTab = view.currentView === 'thread' ? 'feed' : view.currentView;
 
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(
+    undefined
+  );
+
   const isSyncingRef = useRef(false);
   const triggerSync = useCallback(async () => {
     if (isSyncingRef.current || !navigator.onLine) return;
@@ -142,6 +148,7 @@ export default function App() {
       >
         {view.currentView === 'feed' && (
           <FeedView
+            initialCategoryId={selectedCategoryId}
             onSelectTopic={(topicId) =>
               setView({ currentView: 'thread', activeTopicId: topicId })
             }
@@ -165,11 +172,15 @@ export default function App() {
           </div>
         )}
         {view.currentView === 'outbox' && <OutboxView />}
-        {view.currentView !== 'feed' && view.currentView !== 'outbox' && view.currentView !== 'thread' && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
-            <p className="text-sm text-slate-500">Coming soon in the next step.</p>
-          </div>
+        {view.currentView === 'categories' && (
+          <CategoriesView
+            onSelectCategory={(categoryId) => {
+              setSelectedCategoryId(categoryId);
+              setView({ currentView: 'feed' });
+            }}
+          />
         )}
+        {view.currentView === 'profile' && <ProfileView />}
         {view.currentView === 'feed' && !composer && (
           <button
             type="button"
