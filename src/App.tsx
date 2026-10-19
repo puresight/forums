@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare } from 'lucide-react';
 import { db, CURRENT_USER_ID } from './db/index';
+import FeedView from './components/FeedView';
 
 const TABS = [
   { id: 'feed', label: 'Feed', icon: MessageSquare },
@@ -27,31 +27,6 @@ function useOnlineStatus() {
   }, []);
 
   return online;
-}
-
-function useForumStats() {
-  return useLiveQuery(
-    async () => {
-      const [categories, topics, posts, outbox] = await Promise.all([
-        db.categories.count(),
-        db.topics.count(),
-        db.posts.count(),
-        db.outbox.count(),
-      ]);
-      return { categories, topics, posts, outbox };
-    },
-    [],
-    { categories: 0, topics: 0, posts: 0, outbox: 0 }
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl bg-slate-900 px-3 py-2.5 ring-1 ring-white/5">
-      <p className="text-lg font-semibold leading-tight text-slate-100">{value}</p>
-      <p className="mt-0.5 text-xs leading-none text-slate-400">{label}</p>
-    </div>
-  );
 }
 
 function TabButton({
@@ -90,7 +65,6 @@ function TabButton({
 
 export default function App() {
   const online = useOnlineStatus();
-  const stats = useForumStats();
   const [activeTab, setActiveTab] = useState<TabId>('feed');
   const user = useLiveQuery(() => db.users.get(CURRENT_USER_ID), []);
 
@@ -120,22 +94,21 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
-        <section
-          aria-label="Local database stats"
-          className="rounded-2xl bg-slate-900/60 p-4 ring-1 ring-white/5"
-        >
-          <h2 className="text-sm font-medium text-slate-300">Local database (debug)</h2>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Live counts stored on this device
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Stat label="Categories" value={stats.categories} />
-            <Stat label="Topics" value={stats.topics} />
-            <Stat label="Posts" value={stats.posts} />
-            <Stat label="Pending mutations" value={stats.outbox} />
+      <main
+        className="flex-1 flex flex-col pb-[calc(env(safe-area-inset-bottom)+4.5rem)] pt-4"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {activeTab === 'feed' ? (
+          <FeedView
+            onSelectTopic={(topicId) =>
+              console.log(`Topic clicked: ${topicId}`)
+            }
+          />
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
+            <p className="text-sm text-slate-500">Coming soon in the next step.</p>
           </div>
-        </section>
+        )}
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/5 bg-slate-950/80 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
