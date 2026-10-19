@@ -1,4 +1,5 @@
 import { db } from './index';
+import { log, timeOperation } from '@/lib/observability/logger';
 
 export interface SyncResult {
   success: boolean;
@@ -12,29 +13,54 @@ export interface SyncEngine {
   sync: () => Promise<SyncResult>;
 }
 
+let slowNetwork = false;
+
+export function setSlowNetwork(enabled: boolean): void {
+  slowNetwork = enabled;
+}
+
+export function isSlowNetwork(): boolean {
+  return slowNetwork;
+}
+
 export const syncEngine: SyncEngine = {
   isSyncing: false,
   lastSyncAt: null,
   async sync() {
     const pendingMutations = await db.outbox.toArray();
-    if (pendingMutations.length === 0) return { success: true, processedCount: 0 };
+    if (pendingMutations.length === 0) {
+      return { success: true, processedCount: 0 };
+    }
 
     this.isSyncing = true;
+    log('info', 'sync', `Sync started (${pendingMutations.length} pending)`);
+    const startedAt = performance.now();
     try {
       // Simulated network latency; replace with the real transport when the
       // Cloudflare sync target is wired up.
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const baseDelay = slowNetwork ? 3000 : 500;
+      await new Promise((resolve) => setTimeout(resolve, baseDelay));
 
-      await db.transaction('rw', [db.topics, db.posts, db.outbox], async () => {
-        await db.topics.where('syncStatus').equals('pending').modify({ syncStatus: 'synced' });
-        await db.posts.where('syncStatus').equals('pending').modify({ syncStatus: 'synced' });
-        await db.outbox.clear();
-      });
+      await timeOperation('sync', 'sync transaction', () =>
+        db.transaction('rw', [db.topics, db.posts, db.outbox], async () => {
+          await db.topics.where('syncStatus').equals('pending').modify({ syncStatus: 'synced' });
+          await db.posts.where('syncStatus').equals('pending').modify({ syncStatus: 'synced' });
+          await db.outbox.clear();
+        })
+      );
 
       this.lastSyncAt = Date.now();
+      log('info', 'sync', 'Sync completed', {
+        durationMs: Math.round(performance.now() - startedAt),
+        context: { processed: pendingMutations.length },
+      });
       return { success: true, processedCount: pendingMutations.length };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown sync error';
+      log('error', 'sync', 'Sync failed', {
+        durationMs: Math.round(performance.now() - startedAt),
+        context: { error: message },
+      });
       return { success: false, processedCount: 0, error: message };
     } finally {
       this.isSyncing = false;

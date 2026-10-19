@@ -10,9 +10,11 @@ import {
   Check,
   Wifi,
   WifiOff,
+  Activity,
 } from 'lucide-react';
 import { db, CURRENT_USER_ID } from '@/db';
 import { syncEngine } from '@/db/sync';
+import DiagnosticsDrawer from './DiagnosticsDrawer';
 import { formatRelativeTime } from '@/lib/time';
 import Avatar from './Avatar';
 
@@ -24,6 +26,7 @@ export default function ProfileView() {
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [saved, setSaved] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const handleSaveName = async () => {
     const trimmed = nameDraft.trim();
@@ -135,6 +138,18 @@ export default function ProfileView() {
       </div>
 
       <section className="mt-5">
+        <h2 className="mb-2 text-sm font-medium text-slate-300">Diagnostics</h2>
+        <button
+          type="button"
+          onClick={() => setShowDiagnostics(true)}
+          className="flex h-12 w-full select-none items-center gap-2.5 rounded-xl bg-slate-900/60 px-4 text-sm font-medium text-slate-200 ring-1 ring-white/5 transition-colors duration-150 active:bg-slate-850"
+        >
+          <Activity size={16} className="text-sky-300" />
+          Open diagnostics console
+        </button>
+      </section>
+
+      <section className="mt-5">
         <h2 className="mb-2 text-sm font-medium text-slate-300">Account</h2>
         <div className="space-y-2">
           <button
@@ -161,6 +176,8 @@ export default function ProfileView() {
       <p className="mt-4 text-center text-[11px] text-slate-600">
         Member since {formatRelativeTime(Date.now())}
       </p>
+
+      {showDiagnostics && <DiagnosticsDrawer onClose={() => setShowDiagnostics(false)} />}
     </div>
   );
 }
