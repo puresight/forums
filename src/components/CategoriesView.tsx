@@ -9,7 +9,8 @@ export default function CategoriesView({
   onSelectCategory: (categoryId: string) => void;
 }) {
   const categories = useLiveQuery(
-    () => db.categories.orderBy('name').toArray(),
+    async () =>
+      (await db.categories.toArray()).sort((a, b) => a.name.localeCompare(b.name)),
     [],
     []
   );
