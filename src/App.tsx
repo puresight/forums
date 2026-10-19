@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare } from 'lucide-react';
+import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare, Plus } from 'lucide-react';
 import { db, CURRENT_USER_ID } from './db/index';
 import FeedView from './components/FeedView';
 import ThreadView, { type ReplyTarget } from './components/ThreadView';
+import ComposerModal, { type ComposerMode } from './components/ComposerModal';
 
 const TABS = [
   { id: 'feed', label: 'Feed', icon: MessageSquare },
@@ -18,6 +19,10 @@ interface ViewState {
   currentView: 'feed' | 'thread' | 'categories' | 'outbox' | 'profile';
   activeTopicId?: string;
 }
+
+export type ComposerState =
+  | { mode: Extract<ComposerMode, { kind: 'new-topic' }> }
+  | { mode: Extract<ComposerMode, { kind: 'reply' }> };
 
 function useOnlineStatus() {
   const [online, setOnline] = useState(() => navigator.onLine);
@@ -73,6 +78,7 @@ function TabButton({
 export default function App() {
   const online = useOnlineStatus();
   const [view, setView] = useState<ViewState>({ currentView: 'feed' });
+  const [composer, setComposer] = useState<ComposerState | null>(null);
   const user = useLiveQuery(() => db.users.get(CURRENT_USER_ID), []);
   const activeTab = view.currentView === 'thread' ? 'feed' : view.currentView;
 
@@ -119,9 +125,13 @@ export default function App() {
               topicId={view.activeTopicId}
               onBack={() => setView({ currentView: 'feed' })}
               onOpenReply={(target: ReplyTarget) =>
-                console.log(
-                  `Reply opened for topic ${target.topicId}${target.initialQuote ? ' with quote' : ''}`
-                )
+                setComposer({
+                  mode: {
+                    kind: 'reply',
+                    topicId: target.topicId,
+                    initialQuote: target.initialQuote,
+                  },
+                })
               }
             />
           </div>
@@ -131,7 +141,24 @@ export default function App() {
             <p className="text-sm text-slate-500">Coming soon in the next step.</p>
           </div>
         )}
+        {view.currentView === 'feed' && !composer && (
+          <button
+            type="button"
+            onClick={() => setComposer({ mode: { kind: 'new-topic' } })}
+            className="fixed bottom-20 right-4 z-20 flex h-14 w-14 select-none items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-transform duration-150 active:scale-95"
+            aria-label="New topic"
+          >
+            <Plus size={26} />
+          </button>
+        )}
       </main>
+
+      {composer && (
+        <ComposerModal
+          mode={composer.mode}
+          onClose={() => setComposer(null)}
+        />
+      )}
 
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/5 bg-slate-950/80 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto flex w-full max-w-md items-stretch">

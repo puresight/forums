@@ -28,7 +28,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
   });
 }
 
-function MarkdownBody({ content }: { content: string }) {
+export function MarkdownBody({ content }: { content: string }) {
   const blocks: ReactNode[] = [];
   const lines = content.split('\n');
   let i = 0;
