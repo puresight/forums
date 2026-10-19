@@ -112,15 +112,15 @@ export default function DiagnosticsDrawer({ onClose }: { onClose: () => void }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end md:flex-row md:justify-end">
       <button
         type="button"
         aria-label="Close diagnostics"
         onClick={onClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
       />
-      <div className="relative mx-auto flex h-[85dvh] w-full max-w-md flex-col rounded-t-2xl border-t border-white/10 bg-slate-950 pt-[env(safe-area-inset-top)]">
-        <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 px-4">
+      <div className="relative mx-auto flex h-[85dvh] w-full max-w-md flex-col rounded-t-2xl border-t border-white/10 bg-slate-950 pt-[env(safe-area-inset-top)] md:mx-0 md:h-dvh md:w-96 md:rounded-none md:border-l md:pt-0">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 px-4 md:mt-[env(safe-area-inset-top)]">
           <div className="flex items-center gap-2">
             <Activity size={18} className="text-sky-400" />
             <h2 className="text-sm font-semibold">Diagnostics</h2>
