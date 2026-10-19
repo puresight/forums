@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare, Plus } from 'lucide-react';
 import { db, CURRENT_USER_ID } from './db/index';
+import { syncEngine } from './db/sync';
 import FeedView from './components/FeedView';
 import ThreadView, { type ReplyTarget } from './components/ThreadView';
 import ComposerModal, { type ComposerMode } from './components/ComposerModal';
+import OutboxView from './components/OutboxView';
 
 const TABS = [
   { id: 'feed', label: 'Feed', icon: MessageSquare },
@@ -45,25 +47,34 @@ function TabButton({
   label,
   icon: Icon,
   active,
+  badgeCount,
   onClick,
 }: {
   label: string;
   icon: typeof MessageSquare;
   active: boolean;
+  badgeCount?: number;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex h-16 min-w-0 flex-1 select-none flex-col items-center justify-center gap-1 px-1 text-slate-500 transition-colors duration-150 active:scale-95"
+      className="relative flex h-16 min-w-0 flex-1 select-none flex-col items-center justify-center gap-1 px-1 text-slate-500 transition-colors duration-150 active:scale-95"
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <Icon
-        size={22}
-        strokeWidth={active ? 2.4 : 2}
-        className={`transition-colors duration-150 ${active ? 'text-sky-400' : ''}`}
-      />
+      <span className="relative">
+        <Icon
+          size={22}
+          strokeWidth={active ? 2.4 : 2}
+          className={`transition-colors duration-150 ${active ? 'text-sky-400' : ''}`}
+        />
+        {badgeCount !== undefined && badgeCount > 0 && (
+          <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold leading-none text-slate-950">
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+      </span>
       <span
         className={`text-[11px] leading-none transition-colors duration-150 ${
           active ? 'font-semibold text-sky-400' : ''
@@ -80,7 +91,24 @@ export default function App() {
   const [view, setView] = useState<ViewState>({ currentView: 'feed' });
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const user = useLiveQuery(() => db.users.get(CURRENT_USER_ID), []);
+  const pendingCount = useLiveQuery(() => db.outbox.count(), [], 0);
   const activeTab = view.currentView === 'thread' ? 'feed' : view.currentView;
+
+  const isSyncingRef = useRef(false);
+  const triggerSync = useCallback(async () => {
+    if (isSyncingRef.current || !navigator.onLine) return;
+    if ((await db.outbox.count()) === 0) return;
+    const result = await syncEngine.sync();
+    if (!result.success) console.warn('Auto-sync failed:', result.error);
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      triggerSync();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [triggerSync]);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-slate-950 text-slate-100">
@@ -136,7 +164,8 @@ export default function App() {
             />
           </div>
         )}
-        {activeTab !== 'feed' && (
+        {view.currentView === 'outbox' && <OutboxView />}
+        {view.currentView !== 'feed' && view.currentView !== 'outbox' && view.currentView !== 'thread' && (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
             <p className="text-sm text-slate-500">Coming soon in the next step.</p>
           </div>
@@ -168,6 +197,7 @@ export default function App() {
               label={tab.label}
               icon={tab.icon}
               active={activeTab === tab.id}
+              badgeCount={tab.id === 'outbox' ? pendingCount : undefined}
               onClick={() => setView({ currentView: tab.id })}
             />
           ))}
