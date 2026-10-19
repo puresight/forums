@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Category, type Topic, type User } from './index';
+import { db, type Category, type Post, type Topic, type User } from './index';
 
 export type TopicSort = 'latest' | 'top' | 'unanswered';
 
@@ -50,4 +50,42 @@ export function useTopics(
       }));
     }, [categoryId, sortBy]) ?? []
   );
+}
+
+export interface ThreadData {
+  topic?: Topic;
+  category?: Category;
+  author?: User;
+  posts: Array<Post & { author?: User }>;
+  isLoading: boolean;
+}
+
+export function useThread(topicId: string): ThreadData {
+  const thread = useLiveQuery(
+    async () => {
+      const topic = await db.topics.get(topicId);
+      if (!topic) return undefined;
+
+      const [posts, users, categories] = await Promise.all([
+        db.posts.where('topicId').equals(topicId).toArray(),
+        db.users.toArray(),
+        db.categories.toArray(),
+      ]);
+      posts.sort((a, b) => a.createdAt - b.createdAt);
+
+      const userMap = new Map(users.map((u) => [u.id, u]));
+      const category = categories.find((c) => c.id === topic.categoryId);
+
+      return {
+        topic,
+        category,
+        author: userMap.get(topic.authorId),
+        posts: posts.map((p) => ({ ...p, author: userMap.get(p.authorId) })),
+      };
+    },
+    [topicId]
+  );
+
+  if (!thread) return { posts: [], isLoading: true };
+  return { ...thread, isLoading: false };
 }

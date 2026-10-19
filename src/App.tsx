@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { MessageSquare, FolderTree, Clock, User, Wifi, WifiOff, MessagesSquare } from 'lucide-react';
 import { db, CURRENT_USER_ID } from './db/index';
 import FeedView from './components/FeedView';
+import ThreadView, { type ReplyTarget } from './components/ThreadView';
 
 const TABS = [
   { id: 'feed', label: 'Feed', icon: MessageSquare },
@@ -10,7 +12,12 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
 ] as const;
 
-type TabId = (typeof TABS)[number]['id'];
+type TabId = Exclude<ViewState['currentView'], 'thread'>;
+
+interface ViewState {
+  currentView: 'feed' | 'thread' | 'categories' | 'outbox' | 'profile';
+  activeTopicId?: string;
+}
 
 function useOnlineStatus() {
   const [online, setOnline] = useState(() => navigator.onLine);
@@ -65,8 +72,9 @@ function TabButton({
 
 export default function App() {
   const online = useOnlineStatus();
-  const [activeTab, setActiveTab] = useState<TabId>('feed');
+  const [view, setView] = useState<ViewState>({ currentView: 'feed' });
   const user = useLiveQuery(() => db.users.get(CURRENT_USER_ID), []);
+  const activeTab = view.currentView === 'thread' ? 'feed' : view.currentView;
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-slate-950 text-slate-100">
@@ -98,13 +106,27 @@ export default function App() {
         className="flex-1 flex flex-col pb-[calc(env(safe-area-inset-bottom)+4.5rem)] pt-4"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {activeTab === 'feed' ? (
+        {view.currentView === 'feed' && (
           <FeedView
             onSelectTopic={(topicId) =>
-              console.log(`Topic clicked: ${topicId}`)
+              setView({ currentView: 'thread', activeTopicId: topicId })
             }
           />
-        ) : (
+        )}
+        {view.currentView === 'thread' && view.activeTopicId && (
+          <div className="fixed inset-x-0 top-0 bottom-[calc(env(safe-area-inset-bottom)+4rem)] z-30 mx-auto flex w-full max-w-md flex-col bg-slate-950">
+            <ThreadView
+              topicId={view.activeTopicId}
+              onBack={() => setView({ currentView: 'feed' })}
+              onOpenReply={(target: ReplyTarget) =>
+                console.log(
+                  `Reply opened for topic ${target.topicId}${target.initialQuote ? ' with quote' : ''}`
+                )
+              }
+            />
+          </div>
+        )}
+        {activeTab !== 'feed' && (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
             <p className="text-sm text-slate-500">Coming soon in the next step.</p>
           </div>
@@ -119,7 +141,7 @@ export default function App() {
               label={tab.label}
               icon={tab.icon}
               active={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => setView({ currentView: tab.id })}
             />
           ))}
         </div>
