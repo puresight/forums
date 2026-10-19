@@ -199,7 +199,7 @@ export default function App() {
         <button
           type="button"
           onClick={openNewTopic}
-          className="mt-6 flex h-10 select-none items-center justify-center gap-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-transform duration-150 hover:bg-indigo-500 active:scale-[0.98]"
+          className="mt-6 flex h-10 select-none items-center justify-center gap-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-glow-strong transition-transform duration-150 hover:bg-indigo-500 active:scale-[0.98]"
         >
           <Plus size={18} />
           New Topic
@@ -302,7 +302,7 @@ export default function App() {
           <button
             type="button"
             onClick={openNewTopic}
-            className="fixed bottom-20 right-4 z-20 flex h-14 w-14 select-none items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-transform duration-150 active:scale-95 md:hidden"
+            className="fixed bottom-20 right-4 z-20 flex h-14 w-14 select-none items-center justify-center rounded-full bg-indigo-600 text-white shadow-glow-strong transition-transform duration-150 active:scale-95 md:hidden"
             aria-label="New topic"
           >
             <Plus size={26} />

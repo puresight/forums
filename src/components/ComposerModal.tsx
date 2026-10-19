@@ -158,7 +158,7 @@ export default function ComposerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-slate-100 md:items-center md:justify-center md:bg-black/70 md:p-6">
-      <div className="flex h-full w-full flex-col md:h-auto md:max-h-[85vh] md:w-full md:max-w-2xl md:rounded-2xl md:border md:border-slate-800 md:bg-slate-900 md:shadow-2xl">
+      <div className="flex h-full w-full flex-col md:h-auto md:max-h-[85vh] md:w-full md:max-w-2xl md:rounded-2xl md:border md:border-slate-800 md:bg-slate-900 md:shadow-glow">
         <div className="flex h-14 items-center gap-2 border-b border-white/5 px-2 pt-[env(safe-area-inset-top)] md:rounded-t-2xl md:pt-0">
           <button
             type="button"
