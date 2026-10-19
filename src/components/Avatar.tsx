@@ -10,11 +10,16 @@ export default function Avatar({
   size = 'sm',
 }: {
   name?: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }) {
   const initial = (name?.trim()?.charAt(0) ?? '?').toUpperCase();
   const gradient = GRADIENTS[(initial.charCodeAt(0) || 0) % GRADIENTS.length];
-  const dims = size === 'md' ? 'h-9 w-9 text-sm' : 'h-6 w-6 text-[11px]';
+  const dims =
+    size === 'lg'
+      ? 'h-16 w-16 text-2xl'
+      : size === 'md'
+        ? 'h-9 w-9 text-sm'
+        : 'h-6 w-6 text-[11px]';
   return (
     <div
       className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-semibold text-white ${gradient} ${dims}`}

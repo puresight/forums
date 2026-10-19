@@ -65,6 +65,14 @@ export default function ComposerModal({
     visibleEditor()?.focus();
   }, [showPreview]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const saveDraft = (value: string) => {
     setContent(value);
     localStorage.setItem(draftKey(mode), value);

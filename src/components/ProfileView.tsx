@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   MessageSquare,
@@ -27,6 +27,18 @@ export default function ProfileView() {
   const [nameDraft, setNameDraft] = useState('');
   const [saved, setSaved] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+
+  useEffect(() => {
+    if (!editing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEditing(false);
+        setSaved(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editing]);
 
   const handleSaveName = async () => {
     const trimmed = nameDraft.trim();
@@ -58,9 +70,7 @@ export default function ProfileView() {
               className="h-16 w-16 rounded-full object-cover"
             />
           ) : (
-            <div className="scale-[2.667] origin-left">
-              <Avatar name={user?.displayName} size="sm" />
-            </div>
+            <Avatar name={user?.displayName} size="lg" />
           )}
           <div className="min-w-0 flex-1">
             {editing ? (

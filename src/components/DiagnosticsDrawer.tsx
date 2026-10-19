@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Activity,
   Check,
@@ -79,6 +79,14 @@ export default function DiagnosticsDrawer({ onClose }: { onClose: () => void }) 
   const [filter, setFilter] = useState<Filter>('all');
   const [slowMode, setSlowMode] = useState(isSlowNetwork());
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const filtered =
     filter === 'all' ? logs : logs.filter((entry) => entry.category === filter);
